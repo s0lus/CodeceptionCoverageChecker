@@ -1,31 +1,28 @@
 <?php
 
-namespace Nebulosar\Codeception;
+namespace CoverageChecker;
 
 use Codeception\Configuration;
+use Codeception\Coverage\Subscriber\Printer;
 use Codeception\Event\PrintResultEvent;
 use Codeception\Events;
 use Codeception\Exception\ConfigurationException;
-use Codeception\Platform\Extension;
-use Nebulosar\Codeception\CoverageChecker\Checker;
-use Nebulosar\Codeception\CoverageChecker\ClassChecker;
-use Nebulosar\Codeception\CoverageChecker\LineChecker;
-use Nebulosar\Codeception\CoverageChecker\MethodChecker;
-use Nebulosar\Codeception\CoverageChecker\Writer;
+use Codeception\Extension;
 use PHPUnit\Framework\CodeCoverageException;
+use PHPUnit\TextUI\Output\DefaultPrinter;
 
 class CoverageChecker extends Extension
 {
-    public static $events = [
+    public static array $events = [
         Events::RESULT_PRINT_AFTER => 'checkCoverage'
     ];
-    private $_enabled = true;
-    private $_checkers = [];
+    private bool $_enabled
+    private array $_checkers = [];
 
     /**
-     * CoverageChecker constructor.
      * @param array $config - Configuration from codeception.yml file
      * @param array $options - console parameters
+     *
      * @throws ConfigurationException
      */
     public function __construct(array $config, array $options)
@@ -45,48 +42,41 @@ class CoverageChecker extends Extension
                 (isset($options['coverage-phpunit']) && $options['coverage-phpunit'] !== false)
             );
         if ($this->_enabled) {
-            Writer::$noColors = (isset($options['no-colors']) && $options['no-colors'] !== false);
+            Error::$noColors = (isset($options['no-colors']) && $options['no-colors'] !== false);
             $this->init($config['coverage']);
         }
         parent::__construct($config, $options);
     }
 
     /**
-     * Initializes all the checkers
      * @param array $config - The config of the coverage part of codeception
      */
     protected function init(array $config): void
     {
         foreach ($config['check'] as $checkType => $limits) {
             $lowLimit = isset($limits['low_limit']) ? number_format($limits['low_limit'], 2, '.', '') : null;
-            $highLimit = isset($limits['low_limit']) ? number_format($limits['high_limit'], 2, '.', '') : null;
             switch (strtolower($checkType)) {
                 case 'classes':
-                    $this->_checkers[] = new ClassChecker($lowLimit, $highLimit);
+                    $this->_checkers[] = new ClassChecker($lowLimit);
                     break;
                 case 'methods':
-                    $this->_checkers[] = new MethodChecker($lowLimit, $highLimit);
+                    $this->_checkers[] = new MethodChecker($lowLimit);
                     break;
                 case 'lines':
-                    $this->_checkers[] = new LineChecker($lowLimit, $highLimit);
+                    $this->_checkers[] = new LineChecker($lowLimit);
                     break;
             }
         }
     }
 
-    /**
-     * Does the checks on the different type of coverage defined in the codeception.yml
-     * @param PrintResultEvent $event - The event that holds the printer and the test results
-     */
     public function checkCoverage(PrintResultEvent $event): void
     {
-        $codeCoverage = $event->getResult()->getCodeCoverage();
-        $printer = $event->getPrinter();
-        if ($this->_enabled && !empty($codeCoverage)) {
-            $report = $codeCoverage->getReport();
+        if ($this->_enabled) {
+            $report = Printer::$coverage->getReport();
             foreach ($this->_checkers as $checker) {
-                $checker->check($printer, $report);
+                $checker->check(DefaultPrinter::standardOutput(), $report);
             }
+
             if (Checker::$hasError) {
                 throw new CodeCoverageException();
             }

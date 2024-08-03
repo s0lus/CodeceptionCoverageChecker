@@ -1,13 +1,17 @@
 <?php
 
-namespace CoverageChecker;
+namespace Codeception\Exception;
 
 use Codeception\Configuration;
 use Codeception\Coverage\Subscriber\Printer;
 use Codeception\Event\PrintResultEvent;
 use Codeception\Events;
-use Codeception\Exception\ConfigurationException;
 use Codeception\Extension;
+use CoverageChecker\Checker;
+use CoverageChecker\ClassChecker;
+use CoverageChecker\Error;
+use CoverageChecker\LineChecker;
+use CoverageChecker\MethodChecker;
 use PHPUnit\Framework\CodeCoverageException;
 use PHPUnit\TextUI\Output\DefaultPrinter;
 
@@ -16,7 +20,7 @@ class CoverageChecker extends Extension
     public static array $events = [
         Events::RESULT_PRINT_AFTER => 'checkCoverage'
     ];
-    private bool $_enabled
+    private bool $_enabled;
     private array $_checkers = [];
 
     /**

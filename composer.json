@@ -28,7 +28,8 @@
   },
   "autoload": {
     "psr-4": {
-      "CoverageChecker\\": "src/"
+      "CoverageChecker\\": "src/",
+      "Codeception\\Exception\\": "src/Exception"
     }
   },
   "autoload-dev": {

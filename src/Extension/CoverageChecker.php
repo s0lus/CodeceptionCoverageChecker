@@ -1,6 +1,6 @@
 <?php
 
-namespace Codeception\Exception;
+namespace Codeception\Extension;
 
 use Codeception\Configuration;
 use Codeception\Coverage\Subscriber\Printer;
